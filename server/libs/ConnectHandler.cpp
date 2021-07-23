@@ -52,6 +52,8 @@ void* ConnectHandler(void* thread_arg) {
 
 		/* Data received */
 		string data_rcv = string(buffer);
+
+		std::cout << string(buffer);
 		/* Put extra information */
 		string data = info + history + "/" + data_rcv;
 		history += "/" + data_rcv.substr(0,data_rcv.length() - 1);
