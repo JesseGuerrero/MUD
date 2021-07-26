@@ -1,70 +1,31 @@
-#include "client.h"
 #include "networking/encode/login.h"
 
 #include <iostream>
 #include <vector>
 #include <cstdlib>
 #include <cstdio>
-#include <cerrno>
 #include <cstring>
 #include <string>
-#include <utility>
 #include <unistd.h>
 #include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <fcntl.h>
 #include <thread>
 #include <functional>
 #include "networking/network.cpp"
 
 #define BUF_SIZE 100
 
+char logout[BUF_SIZE]="exit";
+
 int main(int argc, char**argv) {
     char buffer[BUF_SIZE];
     int sockfd, ret;
+    setbuf(stdout, 0);
 
-    if (argc < 3)
-    {
-        ShowUsage(argv[0]);
-        std::exit(EXIT_FAILURE);
-    }
-
-    std::vector <std::string> destinationAddress;
-    std::string port;
+    std::vector <std::string> destinationAddress; destinationAddress.push_back("mudgame.tk");
+    std::string port = "5000";
     std::string userName;
-    for(int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
-        if((arg == "-h") || (arg == "--help"))
-        {
-            ShowUsage(argv[0]);
-            std::exit(EXIT_SUCCESS);
-        }
-        else if((arg == "-p") || (arg == "--port"))
-        {
-            port = argv[++i];
-        }
-        else if((arg == "-u") || (arg == "--username"))
-        {
-            userName = argv[++i];
-        }
-        else if((arg == "-d") || (arg == "--destination"))
-        {
-            for(int j = i + 1; j < argc; ++j)
-            {
-                destinationAddress.push_back(argv[j]);
-            }
-
-        }
-    }
 
     sockfd = CreateAndConnect(destinationAddress[0], port);
-
-
     memset(buffer, 0, BUF_SIZE);
 
     //creating a new thread for receiving messages from the server
@@ -73,6 +34,7 @@ int main(int argc, char**argv) {
 
     std::cout<<"Enter your messages one by one and press return key"<<std::endl;
     while (fgets(buffer, BUF_SIZE, stdin) != NULL) {
+        buffer[strcspn(buffer, "\n")] = 0;
         unsigned char buf[BUF_SIZE] = {0};
         int msgLen = strlen(buffer);
         int userNameLen = userName.length();
@@ -92,6 +54,11 @@ int main(int argc, char**argv) {
         if (ret < 0) {
             printf("Error sending data!\n\t-%s", buffer);
         }
+
+        if(strcasecmp(buffer, logout) == 0)
+            break;
+
+
         memset(&buffer, 0, sizeof buffer);
     }
 

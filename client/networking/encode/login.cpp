@@ -11,6 +11,7 @@ void login(std::string userName, int sockfd) {
 
     std::cout<<"Username: ";
     fgets(buffer, BUF_SIZE, stdin);
+    buffer[strcspn(buffer, "\n")] = 0;
 
     strcpy(buffer, ("0-" + std::string(buffer)).c_str());
     unsigned char buf[BUF_SIZE] = {0};
