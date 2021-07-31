@@ -6,3 +6,4 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
 
 add_subdirectory("client")
 add_subdirectory("server")
+add_executable(Test testing.cpp)

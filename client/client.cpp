@@ -1,4 +1,5 @@
 #include "networking/encode/login.h"
+#include "networking/encode/global_message.h"
 
 #include <iostream>
 #include <vector>
@@ -32,34 +33,8 @@ int main(int argc, char**argv) {
     std::thread t(std::bind(ReceiveMessage, sockfd, port, destinationAddress));
     login(userName, sockfd);
 
-    std::cout<<"Enter your messages one by one and press return key"<<std::endl;
-    while (fgets(buffer, BUF_SIZE, stdin) != NULL) {
-        buffer[strcspn(buffer, "\n")] = 0;
-        unsigned char buf[BUF_SIZE] = {0};
-        int msgLen = strlen(buffer);
-        int userNameLen = userName.length();
-
-        unsigned int totalLength = msgLen + userNameLen +4;
-        packi16(buf,totalLength);
-        int offset = 0;
-        offset += 2;
-
-        packi16(buf+offset,userNameLen);
-        offset += 2;
-        memcpy(buf+offset,userName.c_str(),userNameLen);
-        offset += userNameLen;
-        memcpy(buf+offset,buffer,msgLen);
-
-        ret = send(sockfd, buffer, msgLen, 0);
-        if (ret < 0) {
-            printf("Error sending data!\n\t-%s", buffer);
-        }
-
-        if(strcasecmp(buffer, logout) == 0)
-            break;
-
-
-        memset(&buffer, 0, sizeof buffer);
+    while (true) {
+        global_message(buffer, sockfd);
     }
 
     std::cout<<"Exiting & closing"<<std::endl;

@@ -1,6 +1,12 @@
 #include "ConnectHandler.h"
+#include <stdio.h>
+#include <string.h>
+#include "../World.h"
+#include "../Player.h"
 
 using namespace std;
+
+void decode(char *packetID, HostInfo* host_info, string data_rcv);
 
 void* ConnectHandler(void* thread_arg) {
 	/* Get information of the proxy connection */
@@ -22,8 +28,7 @@ void* ConnectHandler(void* thread_arg) {
 
     /* Count of bytes received */
     int bytecount;
-    /* Count of bytes send */
-    int sendcount;
+
 
     /* Additional */
     string info = local_info + "->" + remote_info + ":";
@@ -53,21 +58,41 @@ void* ConnectHandler(void* thread_arg) {
 		/* Data received */
 		string data_rcv = string(buffer);
 
-		std::cout << string(buffer);
-		/* Put extra information */
-		string data = info + history + "/" + data_rcv;
-		history += "/" + data_rcv.substr(0,data_rcv.length() - 1);
+		//Get Packet ID
+        char * buf = strdup(data_rcv.c_str());
+		char *packetID = strtok(buf, "-");
+        cout << "" + (string)packetID << endl;
+		data_rcv.erase (data_rcv.begin(), data_rcv.begin() + strlen(packetID) + 1);
 
-		/* Send the data back to the client */
-		if((sendcount = send(remote_sock, data.c_str(), data.size(), 0))== -1){
-			string message = "[@] Error sending data to client " + remote_info;
-			perror(message.c_str());
-			delete [] buffer;
-			delete host_info;
-			return 0;
-		}
-
+		decode(packetID, host_info, data_rcv);
     }
 
     return 0;
+}
+
+void decode(char *packetID, HostInfo* host_info, string data_rcv) {
+    switch(atoi(packetID)) {
+        case 0:
+            World::addPlayer(data_rcv);
+            break;
+        case 1:
+            break;
+    }
+
+    /* Get the socket descriptor of the remote host */
+    int remote_sock = host_info->remote_sock;
+
+    /* Grab information of the local and remote hosts */
+    string remote_info = host_info->remote_info;
+    string local_info = host_info->local_info;
+
+    /* Count of bytes send */
+    int sendcount;
+
+    /* Send the data back to the client */
+    if((sendcount = send(remote_sock, data_rcv.c_str(), data_rcv.size(), 0))== -1){
+        string message = "[@] Error sending data to client " + remote_info;
+        perror(message.c_str());
+        delete host_info;
+    }
 }
